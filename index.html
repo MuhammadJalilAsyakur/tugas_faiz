@@ -161,13 +161,17 @@
 
         const shelf = book.isComplete ? finishedShelf : unfinishedShelf;
 
+
         const bookElement = createBookElement(book, shelf);
         shelf.appendChild(bookElement);
 
+        console.log(bookElement)
         saveToLocalStorage();
         clearInputs();
       }
     }
+
+
 
     function createBookElement(book, shelf) {
       const bookElement = document.createElement('div');
@@ -178,8 +182,13 @@
       bookElement.appendChild(infoElement);
 
       const buttonElement = document.createElement('button');
-      buttonElement.innerText = book.isComplete ? 'Delete' : 'Move to Completed';
-      buttonElement.addEventListener('click', () => toggleBookStatus(book, shelf, bookElement));
+      if (book.isComplete) {
+        buttonElement.innerText = 'Delete';
+        buttonElement.addEventListener('click', () => deleteBook(book, shelf, bookElement));
+      } else {
+        buttonElement.innerText = 'Move to Completed';
+        buttonElement.addEventListener('click', () => toggleBookStatus(book, shelf, bookElement));
+      }
       bookElement.appendChild(buttonElement);
 
       bookElement.addEventListener('contextmenu', (e) => showDeleteDialog(e, book, shelf, bookElement));
@@ -189,13 +198,19 @@
 
     // function ini yang di ubah
     function toggleBookStatus(book, shelf, bookElement) {
+      const buttonElement = bookElement.querySelector('button');
+
       if (book.isComplete) {
         shelf.removeChild(bookElement);
       } else {
         const newShelf = finishedShelf;
         shelf.removeChild(bookElement);
         newShelf.appendChild(bookElement);
+        buttonElement.innerText = 'Delete';
+        buttonElement.removeEventListener('click', () => toggleBookStatus(book, shelf, bookElement));
+        buttonElement.addEventListener('click', () => deleteBook(book, shelf, bookElement));
       }
+
 
       saveToLocalStorage(); // Move this line outside of the conditional
     }
@@ -271,11 +286,17 @@
     function showDeleteDialog(e, book, shelf, bookElement) {
       e.preventDefault();
       bookToDelete = bookElement;
+      deleteDialog.style.display = 'block';
 
       deleteDialog.querySelector('button').onclick = () => {
         deleteBook(book, shelf, bookElement);
       };
 
+    }
+
+    function confirmDelete(book, shelf, bookElement) {
+      deleteBook(book, shelf, bookElement);
+      cancelDelete();
     }
 
     // ini juga ada perubahan
@@ -292,6 +313,9 @@
     function cancelDelete() {
       deleteDialog.style.display = 'none';
     }
+
+
+
 
     // Load existing books from local storage when the app starts
     loadBooksFromLocalStorage();
